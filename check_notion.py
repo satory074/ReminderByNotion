@@ -15,6 +15,7 @@ headers = {
 def check_and_notify():
     url = f"https://api.notion.com/v1/databases/{DATABASE_ID}/query"
     response = requests.post(url, headers=headers)
+    print("Notion API Response:", response.json()) 
     results = response.json().get("results", [])
 
     now = datetime.datetime.now(datetime.timezone.utc)
@@ -25,6 +26,7 @@ def check_and_notify():
         date_field = item.get("properties", {}).get("日付", {}).get("date", {}).get("start")
         if date_field:
             date = datetime.datetime.fromisoformat(date_field)
+            print(item["properties"]["タイトル"]["title"][0]["text"]["content"], date_field)
             if date < now:
                 overdue_items.append(item["properties"]["タイトル"]["title"][0]["text"]["content"])
 
