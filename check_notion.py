@@ -28,7 +28,10 @@ def check_and_notify(api_key, database_id, webhook_url):
 
     if overdue_items:
         message = {"text": f"Overdue items: {', '.join(overdue_items)}"}
-        requests.post(webhook_url, json=message)
+        response = requests.post(webhook_url, json=message)
+        print("Notification sent:", response.status_code, response.text)  # 確認用
+    else:
+        print("No overdue items found.")  # 過期の項目がない場合のログ
 
 if __name__ == "__main__":
     for api_key, database_id, webhook_url in zip(NOTION_API_KEYS, DATABASE_IDS, WEBHOOK_URLS):
