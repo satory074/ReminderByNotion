@@ -1,8 +1,9 @@
 name: Notion Check and Notify
 
 on:
+  workflow_dispatch:  # 手動実行トリガー
   schedule:
-    - cron: '0 * * * *'  # 毎時実行
+    - cron: '23 * * * *'  # 毎時23分に自動実行
 
 jobs:
   check_notion:
@@ -24,7 +25,7 @@ jobs:
 
       - name: Run Notion Check Script
         env:
-          NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
-          DATABASE_ID: ${{ secrets.DATABASE_ID }}
-          WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
+          NOTION_API_KEYS: ${{ secrets.NOTION_API_KEYS }}
+          DATABASE_IDS: ${{ secrets.DATABASE_IDS }}
+          WEBHOOK_URLS: ${{ secrets.WEBHOOK_URLS }}
         run: python check_notion.py
