@@ -20,7 +20,7 @@ def check_and_notify(api_key, database_id, webhook_url):
     overdue_items = []
 
     for item in results:
-        date_field = item.get("properties", {}).get("期限", {}).get("date", {}).get("start")
+        date_field = item.get("properties", {}).get("日付", {}).get("date", {}).get("start")
         if date_field:
             date = datetime.datetime.fromisoformat(date_field)
             if date < now:
