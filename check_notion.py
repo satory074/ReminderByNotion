@@ -19,10 +19,12 @@ def check_and_notify():
     print("Notion API Response:", response.json()) 
     results = response.json().get("results", [])
 
-    now_utc = datetime.datetime.now(datetime.timezone.utc)
     jst = pytz.timezone('Asia/Tokyo')
+    now_utc = datetime.datetime.now(datetime.timezone.utc)
     now_jst = now_utc.astimezone(jst)
+    today_jst = now_jst.date()
     overdue_items = []
+    due_today_items = []
 
     for item in results:
         # "日付"フィールドを取得
@@ -38,17 +40,23 @@ def check_and_notify():
                     date_utc = date_utc.replace(tzinfo=datetime.timezone.utc)
                 # JSTに変換
                 date_jst = date_utc.astimezone(jst)
-                # 現在時刻（JST）と比較
-                if date_jst < now_jst:
-                    # "タイトル"フィールドを取得
-                    title_property = item.get("properties", {}).get("タイトル", {})
-                    title_list = title_property.get("title", [])
-                    if title_list:
-                        title_text = title_list[0].get("text", {}).get("content", "No Title")
-                    else:
-                        title_text = "No Title"
-                    # 期限切れのアイテムをリストに追加
-                    overdue_items.append({'title': title_text, 'date': date_jst})
+                due_date = date_jst.date()
+                # "タイトル"フィールドを取得
+                title_property = item.get("properties", {}).get("タイトル", {})
+                title_list = title_property.get("title", [])
+                if title_list:
+                    title_text = title_list[0].get("text", {}).get("content", "No Title")
+                else:
+                    title_text = "No Title"
+                # 日付を簡潔な形式にフォーマット
+                date_str = date_jst.strftime('%Y-%m-%d %H:%M')
+                task_info = {'title': title_text, 'date': date_jst, 'date_str': date_str}
+
+                # タスクを分類
+                if due_date < today_jst:
+                    overdue_items.append(task_info)
+                elif due_date == today_jst:
+                    due_today_items.append(task_info)
             except ValueError as e:
                 print(f"Invalid date format for item: {item['id']}")
                 continue
@@ -62,35 +70,55 @@ def check_and_notify():
                 title_text = "No Title"
             print(f"Skipping item with missing or invalid date: {title_text}")
 
-    if overdue_items:
-        # 日付で昇順にソート
-        overdue_items.sort(key=lambda x: x['date'])
+    if overdue_items or due_today_items:
+        embeds = []
 
-        # Discordの埋め込みメッセージを作成
-        embed_fields = []
-        for item in overdue_items:
-            date_str = item['date'].strftime('%Y-%m-%d %H:%M')
-            embed_fields.append({
-                "name": item['title'],
-                "value": f"期限日: {date_str}",
-                "inline": False
-            })
+        if overdue_items:
+            # 日付で昇順にソート
+            overdue_items.sort(key=lambda x: x['date'])
+            # Overdueタスクの埋め込みメッセージを作成
+            embed_fields = []
+            for item in overdue_items:
+                embed_fields.append({
+                    "name": item['title'],
+                    "value": f"期限日: {item['date_str']}",
+                    "inline": False
+                })
+            embed = {
+                "title": "【リマインダー】期限が切れたタスクがあります",
+                "color": 15158332,  # 赤色
+                "fields": embed_fields,
+                "timestamp": datetime.datetime.utcnow().isoformat()
+            }
+            embeds.append(embed)
 
-        embed = {
-            "title": "【リマインダー】期限切れのアイテムがあります",
-            "color": 15158332,  # 赤色
-            "fields": embed_fields,
-            "timestamp": datetime.datetime.utcnow().isoformat()
-        }
+        if due_today_items:
+            # 日付で昇順にソート
+            due_today_items.sort(key=lambda x: x['date'])
+            # 今日が期限のタスクの埋め込みメッセージを作成
+            embed_fields = []
+            for item in due_today_items:
+                embed_fields.append({
+                    "name": item['title'],
+                    "value": f"期限日: {item['date_str']}",
+                    "inline": False
+                })
+            embed = {
+                "title": "【リマインダー】今日が期限のタスクがあります",
+                "color": 3066993,  # 緑色
+                "fields": embed_fields,
+                "timestamp": datetime.datetime.utcnow().isoformat()
+            }
+            embeds.append(embed)
 
         data = {
-            "embeds": [embed]
+            "embeds": embeds
         }
 
         response = requests.post(WEBHOOK_URL, json=data)
         print("Notification sent:", response.status_code, response.text)
     else:
-        print("No overdue items found.")
+        print("No overdue or due today items found.")
 
 if __name__ == "__main__":
     check_and_notify()
