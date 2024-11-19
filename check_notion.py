@@ -57,7 +57,7 @@ def check_and_notify():
             print(f"Skipping item with missing or invalid date: {title_text}")
 
     if overdue_items:
-        message = {"text": f"Overdue items: {', '.join(overdue_items)}"}
+        message = {"content": f"Overdue items: {', '.join(overdue_items)}"}
         response = requests.post(WEBHOOK_URL, json=message)
         print("Notification sent:", response.status_code, response.text)
     else:
