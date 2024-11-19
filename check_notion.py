@@ -2,9 +2,9 @@ import requests
 import datetime
 import os
 
-NOTION_API_KEY = os.getenv("NOTION_API_KEY")
-DATABASE_ID = os.getenv("DATABASE_ID")
-WEBHOOK_URL = os.getenv("WEBHOOK_URL")
+NOTION_API_KEY = os.getenv("NOTION_API_KEYS")
+DATABASE_ID = os.getenv("DATABASE_IDS")
+WEBHOOK_URL = os.getenv("WEBHOOK_URLS")
 
 headers = {
     "Authorization": f"Bearer {NOTION_API_KEY}",
