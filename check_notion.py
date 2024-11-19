@@ -23,16 +23,38 @@ def check_and_notify():
 
     for item in results:
         # "日付"フィールドを取得
-        date_field = item.get("properties", {}).get("日付", {}).get("date", {}).get("start")
-        if date_field:
-            # ISO形式の日時をdatetimeオブジェクトに変換
-            date = datetime.datetime.fromisoformat(date_field)
-            # タイムゾーン情報を付与
-            if date.tzinfo is None:
-                date = date.replace(tzinfo=datetime.timezone.utc)
-            # 現在時刻（UTC）と比較
-            if date < now:
-                overdue_items.append(item["properties"]["タイトル"]["title"][0]["text"]["content"])
+        date_property = item.get("properties", {}).get("日付", {})
+        date_value = date_property.get("date")
+        if date_value and date_value.get("start"):
+            date_field = date_value.get("start")
+            try:
+                # ISO形式の日時をdatetimeオブジェクトに変換
+                date = datetime.datetime.fromisoformat(date_field)
+                # タイムゾーン情報を付与
+                if date.tzinfo is None:
+                    date = date.replace(tzinfo=datetime.timezone.utc)
+                # 現在時刻（UTC）と比較
+                if date < now:
+                    # "タイトル"フィールドを取得
+                    title_property = item.get("properties", {}).get("タイトル", {})
+                    title_list = title_property.get("title", [])
+                    if title_list:
+                        title_text = title_list[0].get("text", {}).get("content", "No Title")
+                    else:
+                        title_text = "No Title"
+                    overdue_items.append(title_text)
+            except ValueError as e:
+                print(f"Invalid date format for item: {item['id']}")
+                continue
+        else:
+            # "日付"フィールドがない、または無効な場合はスキップ
+            title_property = item.get("properties", {}).get("タイトル", {})
+            title_list = title_property.get("title", [])
+            if title_list:
+                title_text = title_list[0].get("text", {}).get("content", "No Title")
+            else:
+                title_text = "No Title"
+            print(f"Skipping item with missing or invalid date: {title_text}")
 
     if overdue_items:
         message = {"text": f"Overdue items: {', '.join(overdue_items)}"}
