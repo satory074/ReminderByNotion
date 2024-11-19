@@ -3,7 +3,7 @@ name: Notion Check and Notify
 on:
   workflow_dispatch:  # 手動実行トリガー
   schedule:
-    - cron: '23 * * * *'  # 毎時23分に自動実行
+    - cron: '0 * * * *'  # 毎時23分に自動実行
 
 jobs:
   check_notion:
