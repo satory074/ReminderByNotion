@@ -25,8 +25,9 @@ def check_and_notify():
         # "日付"フィールドを取得
         date_field = item.get("properties", {}).get("日付", {}).get("date", {}).get("start")
         if date_field:
+            # ISO形式の日時をdatetimeオブジェクトに変換
             date = datetime.datetime.fromisoformat(date_field)
-            print(item["properties"]["タイトル"]["title"][0]["text"]["content"], date_field)
+            # 現在時刻（UTC）と比較
             if date < now:
                 overdue_items.append(item["properties"]["タイトル"]["title"][0]["text"]["content"])
 
