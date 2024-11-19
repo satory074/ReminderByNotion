@@ -42,7 +42,10 @@ def check_and_notify():
                         title_text = title_list[0].get("text", {}).get("content", "No Title")
                     else:
                         title_text = "No Title"
-                    overdue_items.append(title_text)
+                    # 日付を文字列にフォーマット
+                    date_str = date.strftime('%Y-%m-%d %H:%M:%S %Z')
+                    # 期限切れのアイテムをリストに追加
+                    overdue_items.append({'title': title_text, 'date': date_str})
             except ValueError as e:
                 print(f"Invalid date format for item: {item['id']}")
                 continue
@@ -57,8 +60,27 @@ def check_and_notify():
             print(f"Skipping item with missing or invalid date: {title_text}")
 
     if overdue_items:
-        message = {"content": f"Overdue items: {', '.join(overdue_items)}"}
-        response = requests.post(WEBHOOK_URL, json=message)
+        # Discordの埋め込みメッセージを作成
+        embed_fields = []
+        for item in overdue_items:
+            embed_fields.append({
+                "name": item['title'],
+                "value": f"期限日: {item['date']}",
+                "inline": False
+            })
+
+        embed = {
+            "title": "期限切れのアイテムがあります",
+            "color": 15158332,  # 赤色
+            "fields": embed_fields,
+            "timestamp": datetime.datetime.utcnow().isoformat()
+        }
+
+        data = {
+            "embeds": [embed]
+        }
+
+        response = requests.post(WEBHOOK_URL, json=data)
         print("Notification sent:", response.status_code, response.text)
     else:
         print("No overdue items found.")
