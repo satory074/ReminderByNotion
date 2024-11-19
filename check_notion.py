@@ -2,6 +2,7 @@ import requests
 import datetime
 import os
 import pytz
+from dateutil import parser
 
 NOTION_API_KEY = os.getenv("NOTION_API_KEYS")
 DATABASE_ID = os.getenv("DATABASE_IDS")
@@ -20,8 +21,8 @@ def check_and_notify():
     results = response.json().get("results", [])
 
     jst = pytz.timezone('Asia/Tokyo')
-    now_utc = datetime.datetime.now(datetime.timezone.utc)
-    now_jst = now_utc.astimezone(jst)
+    utc = pytz.utc
+    now_jst = datetime.datetime.now(jst)
     today_jst = now_jst.date()
     overdue_items = []
     due_today_items = []
@@ -33,13 +34,12 @@ def check_and_notify():
         if date_value and date_value.get("start"):
             date_field = date_value.get("start")
             try:
-                # ISO形式の日時をdatetimeオブジェクトに変換
-                date_utc = datetime.datetime.fromisoformat(date_field)
-                # タイムゾーン情報がない場合はUTCを設定
-                if date_utc.tzinfo is None:
-                    date_utc = date_utc.replace(tzinfo=datetime.timezone.utc)
+                # 日付文字列をパースし、タイムゾーンを設定
+                date = parser.isoparse(date_field)
+                if date.tzinfo is None:
+                    date = utc.localize(date)
                 # JSTに変換
-                date_jst = date_utc.astimezone(jst)
+                date_jst = date.astimezone(jst)
                 due_date = date_jst.date()
                 # "タイトル"フィールドを取得
                 title_property = item.get("properties", {}).get("タイトル", {})
@@ -88,7 +88,7 @@ def check_and_notify():
                 "title": "【リマインダー】期限が切れたタスクがあります",
                 "color": 15158332,  # 赤色
                 "fields": embed_fields,
-                "timestamp": datetime.datetime.utcnow().isoformat()
+                "timestamp": datetime.datetime.now(jst).isoformat()
             }
             embeds.append(embed)
 
@@ -107,7 +107,7 @@ def check_and_notify():
                 "title": "【リマインダー】今日が期限のタスクがあります",
                 "color": 3066993,  # 緑色
                 "fields": embed_fields,
-                "timestamp": datetime.datetime.utcnow().isoformat()
+                "timestamp": datetime.datetime.now(jst).isoformat()
             }
             embeds.append(embed)
 
