@@ -1,31 +1,31 @@
 name: Notion Check and Notify
 
 on:
-  workflow_dispatch:
-  schedule:
-    - cron: '0 * * * *'
+    workflow_dispatch:
+    schedule:
+        - cron: "0 */3 * * *"
 
 jobs:
-  check_notion:
-    runs-on: ubuntu-latest
+    check_notion:
+        runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v2
 
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.x'
+            - name: Set up Python
+              uses: actions/setup-python@v2
+              with:
+                  python-version: "3.x"
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+            - name: Install dependencies
+              run: |
+                  python -m pip install --upgrade pip
+                  pip install -r requirements.txt
 
-      - name: Run Notion Check Script
-        env:
-          NOTION_API_KEYS: ${{ secrets.NOTION_API_KEYS }}
-          DATABASE_IDS: ${{ secrets.DATABASE_IDS }}
-          WEBHOOK_URLS: ${{ secrets.WEBHOOK_URLS }}
-        run: python check_notion.py
+            - name: Run Notion Check Script
+              env:
+                  NOTION_API_KEYS: ${{ secrets.NOTION_API_KEYS }}
+                  DATABASE_IDS: ${{ secrets.DATABASE_IDS }}
+                  WEBHOOK_URLS: ${{ secrets.WEBHOOK_URLS }}
+              run: python check_notion.py
